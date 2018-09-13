@@ -190,13 +190,7 @@ PS：server-push 需要服务端设置，并不是说浏览器发起请求，与
 ##### 3.3 Server-Push 潜在的问题
 Server-Push 满足条件时便会发起推送，可是客户端已经有缓存了想发送 RST 拒收，而服务器在收到 RST 之前已经推送资源了，虽然这部分推送无效但是肯定会占用带宽
 
-比如我上面博客关于 http2_push 的配置，我每次打开首页服务器都会推送那四个文件，而实际上浏览器知道自己有缓存使用的也是本地缓存，也就是说本地缓存未失效的期间内，服务器的 Server-Push 只是起到了占用带宽的作用
-
-当然实际上对我的小站点来说影响并不大，但是如果网站需要大量推送的话，需要考虑并测试 Server-Push 是否会影响用户的后续访问
-
 另外服务端可以设置 Cookie 或者 Session 记录访问时间，然后之后的访问判断是否需要 Push；还有就是客户端可以限制 PUSH 流的数目，也可以设置一个很低的流量窗口来限制 PUSH 发送的数据大小
-
-至于哪些资源需要推送，在《web 性能权威指南》中就提到几种策略，比如 Apache 的 mod_spdy 能够识别 X-Associated-Content 首部，当中列出了希望服务器推送的资源；另外网上有人已经做了基于 Referer 首部的中间件来处理 Server-Push；或者服务端能更智能的识别文档，根据当前流量决定是否推送或者推送那些资源。相信以后会有更多关于 Server-Push 的实现和应用
 
 #### 4. Header 压缩 (HPACK)
 
@@ -205,8 +199,8 @@ HTTP/2 里的首部字段也是一个键具有一个或多个值。这些首部�
 首部列表 (Header List) 是零个或多个首部字段 (Header Field) 的集合。当通过连接传送时，首部列表通过压缩算法 序列化成首部块 (Header Block)。然后，序列化的首部块又被划分成一个或多个叫做首部块片段 (Header Block Fragment) 的字节序列，并通过 HEADERS、PUSH_PROMISE，或者 CONTINUATION 帧进行有效负载传送。
 
 ###### 一个完整的首部块有两种可能
-一个 HEADERS 帧或 PUSH_PROMISE 帧加上设置 END_HEADERS flag
-一个未设置 END_HEADERS flag 的 HEADERS 帧或 PUSH_PROMISE 帧，加上多个 CONTINUATION 帧，其中最后一个 CONTINUATION 帧设置 END_HEADERS flag
+一个 HEADERS 帧或 PUSH_PROMISE 帧加上设置 END_HEADERS flag <br/>
+一个未设置 END_HEADERS flag 的 HEADERS 帧或 PUSH_PROMISE 帧，加上多个 CONTINUATION 帧，其中最后一个 CONTINUATION 帧设置 END_HEADERS flag <br/>
 PS：必须将首部块作为连续的帧序列传送，不能插入任何其他类型或其他流的帧。尾帧设置 END_HEADERS 标识代表首部块结束，这让首部块在逻辑上等价于一个单独的帧。接收端连接片段重组首部块，然后解压首部块重建首部列表。
 
 使用 HPACK 算法来压缩首部内容
@@ -269,7 +263,7 @@ HTTP/2 里的每个 stream 都可以设置依赖 (Dependency) 和权重，可以
 
 
 ## 3. HTTP/2 的协议协商机制
-#### 1. 非加密下的协商 - h2c
+#### 1. 非加密下的协商
 
 客户端使用 HTTP Upgrade 机制请求升级，HTTP2-Settings 首部字段是一个专用于连接的首部字段，它包含管理 HTTP/2 连接的参数(使用 Base64 编码)，其前提是假设服务端会接受升级请求
 
@@ -293,7 +287,7 @@ Upgrade: h2c
 
 此时潜在的存在一个流 0x1，客户端上这个流在完成 h1 请求后便转为 half-closed 状态，服务端会用这个流返回响应
 
-#### 2. 加密的协商机制 - h2
+#### 2. 加密的协商机制
 TLS 加密中在 Client-Hello 和 Server-Hello 的过程中通过 ALPN 进行协议协商
 ![image](https://sanchunpeng.github.io/HTTP2.0/image/application_layer_protocol_negotiation_1.png)
 
@@ -374,9 +368,4 @@ PS：6-8不推荐在 HTTP/2 中用
 
 使用 HTTP/2 尽可能用最少的连接，因为同一个连接上产生的请求和响应越多，动态字典积累得越全，头部压缩效果也就越好，而且多路复用效率高，不会像多连接那样造成资源浪费
 
-为此需要注意以下两点:
-- 同一域名下的资源使用同一个连接，这是 HTTP/2 的特性
-- 不同域名下的资源，如果满足能解析到同一 IP 或者使用的是同一个证书(比如泛域名证书)，HTTP/2 可以合并多个连接
-
-所以使用相同的 IP 和证书部署 Web 服务是目前最好的选择，因为这让支持 HTTP/2 的终端可以复用同一个连接，实现 HTTP/2 协议带来的好处；而只支持 HTTP/1.1 的终端则会不同域名建立不同连接，达到同时更多并发请求的目的
-
+HTTP/2在同一域名下的资源使用同一个连接，所以最好使用相同的IP和证书部署web服务，这样就可以复用同一个连接
