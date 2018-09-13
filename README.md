@@ -91,7 +91,6 @@ http2如图所示，会多一些首部信息，报文是重组解析过后的，
 
 
 ###### DATA 帧有如下标识 (flags):
-**** ****(是一个8bit)
 
 ![image](https://sanchunpeng.github.io/HTTP2.0/image/DATA-Frame1.png)
 ![image](https://sanchunpeng.github.io/HTTP2.0/image/DATA-Frame3.png)
