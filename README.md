@@ -1,9 +1,9 @@
-# HTTP2.0
+# HTTP2
 ## 1. HTTP1.x存在的性能问题
 
 ##### 1> 需要开启多个连接来实现并发和减少潜在影响<br/>
 如果想并发多个请求，必须使用多个TCP链接，且浏览器为了控制资源，限制最多只能同时创建 6~8个TCP连接(不同浏览器不同)
-![image](https://sanchunpeng.github.io/HTTP2.0/image/yumingxianzhi.jpeg)
+![image](https://sanchunpeng.github.io/HTTP2/image/yumingxianzhi.jpeg)
 红色圈出来的请求就因域名链接数已超过限制，而被挂起等待了一段时间<br/>
 针对这个问题的一些解决办法是：减少请求数，合并请求、域名分片(将资源放在不同域名下)、图片精灵等<br/>
 但是每个 TCP 连接本身需要经过 DNS 查询、三步握手、慢启动等，还占用额外的 CPU 和内存，对于服务器来说过多连接也容易造成网络拥挤、交通阻塞
@@ -21,19 +21,19 @@
 
 #### 1. 二进制分帧层(Binary Framing Layer)
 帧是数据传输的最小单位，以二进制传输代替原本的明文传输，原本的报文消息被划分为更小的数据帧
-![image](https://sanchunpeng.github.io/HTTP2.0/image/http2-frame.png)
-这里对比一下http1.1和http2.0的报文(PS：这里要用https请求，因为当前HTTP/2网站都使用了HTTPS，数据传输都经过了 SSL 加密)
+![image](https://sanchunpeng.github.io/HTTP2/image/http2-frame.png)
+这里对比一下http1.1和HTTP2的报文(PS：这里要用https请求，因为当前HTTP/2网站都使用了HTTPS，数据传输都经过了 SSL 加密)
 
 ###### http header
-![image](https://sanchunpeng.github.io/HTTP2.0/image/http_header.jpg)
+![image](https://sanchunpeng.github.io/HTTP2/image/http_header.jpg)
 
 ###### http2 header
-![image](https://sanchunpeng.github.io/HTTP2.0/image/http2_header.jpg)
+![image](https://sanchunpeng.github.io/HTTP2/image/http2_header.jpg)
 
 http2如图所示，会多一些首部信息，报文是重组解析过后的，而且所有头字段均小写
 
 ###### 使用chrome://net-internals/#http2进入浏览器管理界面
-![image](https://sanchunpeng.github.io/HTTP2.0/image/liulanqi.jpg)
+![image](https://sanchunpeng.github.io/HTTP2/image/liulanqi.jpg)
 
 会列出浏览器当前所有活跃的HTTP/2 Session，点击具体的 Session ID，可以看到全部帧信息。
 
@@ -92,8 +92,8 @@ http2如图所示，会多一些首部信息，报文是重组解析过后的，
 
 ###### DATA 帧有如下标识 (flags):
 
-![image](https://sanchunpeng.github.io/HTTP2.0/image/DATA-Frame1.png)
-![image](https://sanchunpeng.github.io/HTTP2.0/image/DATA-Frame3.png)
+![image](https://sanchunpeng.github.io/HTTP2/image/DATA-Frame1.png)
+![image](https://sanchunpeng.github.io/HTTP2/image/DATA-Frame3.png)
 
 - END_STREAM: bit 0 设为 1 代表当前流的最后一帧
 - PADDED: bit 3 设为 1 代表存在 Padding
@@ -123,7 +123,7 @@ http2如图所示，会多一些首部信息，报文是重组解析过后的，
 
 ###### HEADERS 帧有以下标识 (flags):
 
-![image](https://sanchunpeng.github.io/HTTP2.0/image/HEADERS-Frame.png)
+![image](https://sanchunpeng.github.io/HTTP2/image/HEADERS-Frame.png)
 - END_STREAM: bit 0 设为 1 代表当前 header 块是发送的最后一块，但是带有 END_STREAM 标识的 HEADERS 帧后面还可以跟 CONTINUATION 帧 (这里可以把 CONTINUATION 看作 HEADERS 的一部分)
 - END_HEADERS: bit 2 设为 1 代表 header 块结束
 - PADDED: bit 3 设为 1 代表 Pad 被设置，存在 Pad Length 和 Padding
@@ -204,7 +204,7 @@ HTTP/2 里的首部字段也是一个键具有一个或多个值。这些首部�
 PS：必须将首部块作为连续的帧序列传送，不能插入任何其他类型或其他流的帧。尾帧设置 END_HEADERS 标识代表首部块结束，这让首部块在逻辑上等价于一个单独的帧。接收端连接片段重组首部块，然后解压首部块重建首部列表。
 
 使用 HPACK 算法来压缩首部内容
-![image](https://sanchunpeng.github.io/HTTP2.0/image/hpack.png)
+![image](https://sanchunpeng.github.io/HTTP2/image/hpack.png)
 可以清楚地看到 HTTP2 头部使用的也是键值对形式的值，而且 HTTP1 当中的请求行以及状态行也被分割成键值对，还有所有键都是小写，不同于 HTTP1。除此之外，还有一个包含静态索引表和动态索引表的索引空间，实际传输时会把头部键值表压缩，使用的算法即 HPACK，其原理就是匹配当前连接存在的索引空间，若某个键值已存在，则用相应的索引代替首部条目，比如 “:method: GET” 可以匹配到静态索引中的 index 2，传输时只需要传输一个包含 2 的字节即可；若索引空间中不存在，则用字符编码传输，字符编码可以选择哈夫曼编码，然后分情况判断是否需要存入动态索引表中
 
 
@@ -289,11 +289,11 @@ Upgrade: h2c
 
 #### 2. 加密的协商机制
 TLS 加密中在 Client-Hello 和 Server-Hello 的过程中通过 ALPN 进行协议协商
-![image](https://sanchunpeng.github.io/HTTP2.0/image/application_layer_protocol_negotiation_1.png)
+![image](https://sanchunpeng.github.io/HTTP2/image/application_layer_protocol_negotiation_1.png)
 
 应用层协议协商在 TLS 握手第一步的扩展中，Client Hello 中客户端指定 ALPN Next Protocol 为 h2 或者 http/1.1 说明客户端支持的协议
 
-![image](https://sanchunpeng.github.io/HTTP2.0/image/application_layer_protocol_negotiation_2.png)
+![image](https://sanchunpeng.github.io/HTTP2/image/application_layer_protocol_negotiation_2.png)
 服务端如果在 Server Hello 中选择 h2 扩展，说明协商协议为 h2，后续请求响应跟着变化；如果服务端未设置 http/2 或者不支持 h2，则继续用 http/1.1 通信
 
 ## 4. 实例
